@@ -6,10 +6,15 @@ import (
 )
 
 type box struct {
-	value     int
-	rowIdx    int
-	colIdx    int
-	squareIdx int
+	value           int
+	rowIdx          int
+	rowNeighborIdx1 int
+	rowNeighborIdx2 int
+	colIdx          int
+	colNeighborIdx1 int
+	colNeighborIdx2 int
+	squareIdx       int
+	options         []int
 }
 
 type sk struct {
@@ -55,9 +60,23 @@ func (s *sk) initBoxes(input [81]int) {
 				return ((col%3 - col) / -3) + (((row%3 - row) / -3) * 3)
 			}(),
 		}
+
+		boxes[idx].rowNeighborIdx1, boxes[idx].rowNeighborIdx2 = getNeighborsIdx(boxes[idx].rowIdx)
+		boxes[idx].colNeighborIdx1, boxes[idx].colNeighborIdx2 = getNeighborsIdx(boxes[idx].colIdx)
+
 	}
 
 	(*s).boxes = boxes
+}
+
+func getNeighborsIdx(idx int) (idx1 int, idx2 int) {
+	if idx%3 == 0 {
+		return idx + 1, idx + 2
+	} else if idx%3 == 1 {
+		return idx - 1, idx + 1
+	} else {
+		return idx - 2, idx - 1
+	}
 }
 
 func (s *sk) initOptions() {
@@ -82,6 +101,67 @@ func (s *sk) initOptions() {
 	(*s).options.rows = rowsOp
 	(*s).options.cols = colsOp
 	(*s).options.squares = squaresOp
+}
+
+func (s *sk) getBoxValues() bool {
+	hasNewValue := false
+
+	for idx, box := range s.boxes {
+		if box.value == 0 {
+
+			var pointOpts []int
+			var neighborOpts []int
+
+			for i := 1; i < 10; i++ {
+				if contains(s.options.rows[box.rowIdx], i) &&
+					contains(s.options.cols[box.colIdx], i) &&
+					contains(s.options.squares[box.squareIdx], i) {
+					pointOpts = append(pointOpts, i)
+				}
+
+				if contains(s.options.rows[box.rowNeighborIdx1], i) ||
+					contains(s.options.rows[box.rowNeighborIdx2], i) ||
+					contains(s.options.cols[box.colNeighborIdx1], i) ||
+					contains(s.options.cols[box.colNeighborIdx2], i) {
+					neighborOpts = append(neighborOpts, i)
+				}
+			}
+
+			if len(pointOpts) == 1 {
+				(*s).setNewBoxValue(pointOpts[0], idx)
+				hasNewValue = true
+			}
+
+			var options []int
+
+			for _, v := range pointOpts {
+				if !contains(neighborOpts, v) {
+					options = append(options, v)
+				}
+			}
+
+			if len(options) == 1 {
+				(*s).setNewBoxValue(options[0], idx)
+				hasNewValue = true
+			} else if len(options) != 0 {
+				(*s).boxes[idx].options = options
+			} else {
+				(*s).boxes[idx].options = pointOpts
+			}
+		}
+	}
+
+	return hasNewValue
+}
+
+func (s *sk) setNewBoxValue(value int, idx int) {
+	(*s).boxes[idx].value = value
+
+	box := (*s).boxes[idx]
+
+	(*s).options.squares[box.squareIdx] = remove((*s).options.squares[box.squareIdx], value)
+	(*s).options.cols[box.colIdx] = remove((*s).options.cols[box.colIdx], value)
+	(*s).options.squares[box.squareIdx] = remove((*s).options.squares[box.squareIdx], value)
 }
 
 func remove(s []int, rV int) []int {

@@ -23,10 +23,33 @@ func TestCreateSkInitBoxes(t *testing.T) {
 			t.Errorf("Expected box rowIdx=%v, got %v", expRowIdx[idx], sk.boxes[boxIdx].rowIdx)
 		}
 
+		expRowNeighborIdx1 := []int{1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6}
+
+		if sk.boxes[boxIdx].rowNeighborIdx1 != expRowNeighborIdx1[idx] {
+			t.Errorf("Expected box rowNeighborIdx1=%v, got %v", expRowNeighborIdx1[idx], sk.boxes[boxIdx].rowNeighborIdx1)
+		}
+
+		expRowNeighborIdx2 := []int{2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 7}
+
+		if sk.boxes[boxIdx].rowNeighborIdx2 != expRowNeighborIdx2[idx] {
+			t.Errorf("Expected box rowNeighborIdx2=%v, got %v", expRowNeighborIdx2[idx], sk.boxes[boxIdx].rowNeighborIdx2)
+		}
+
 		expColIdx := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 8}
 
 		if sk.boxes[boxIdx].colIdx != expColIdx[idx] {
 			t.Errorf("Expected box colIdx=%v, got %v", expColIdx[idx], sk.boxes[boxIdx].colIdx)
+		}
+
+		expColNeighborIdx1 := []int{1, 0, 0, 4, 3, 3, 7, 6, 6, 1, 0, 0, 4, 3, 3, 7, 6, 6, 1, 0, 0, 6}
+
+		if sk.boxes[boxIdx].colNeighborIdx1 != expColNeighborIdx1[idx] {
+			t.Errorf("Expected box colNeighborIdx1=%v, got %v", expColNeighborIdx1[idx], sk.boxes[boxIdx].colNeighborIdx1)
+		}
+		expColNeighborIdx2 := []int{2, 2, 1, 5, 5, 4, 8, 8, 7, 2, 2, 1, 5, 5, 4, 8, 8, 7, 2, 2, 1, 7}
+
+		if sk.boxes[boxIdx].colNeighborIdx2 != expColNeighborIdx2[idx] {
+			t.Errorf("Expected box colNeighborIdx2=%v, got %v", expColNeighborIdx2[idx], sk.boxes[boxIdx].colNeighborIdx2)
 		}
 
 		expSquareIdx := []int{0, 0, 0, 1, 1, 1, 2, 2, 2, 0, 0, 0, 1, 1, 1, 2, 2, 2, 0, 0, 0, 8}
@@ -95,5 +118,22 @@ func TestCreateSkInitOptions(t *testing.T) {
 			5,
 			len(sk.options.squares[6]),
 		)
+	}
+}
+
+func TestGetBoxValues(t *testing.T) {
+	sk := createSk("000000000035070840097302510003904100060000090009503700051608920026090450000000000")
+
+	for hasNewValue := true; hasNewValue == true; {
+		hasNewValue = sk.getBoxValues()
+	}
+
+	index := []int{12, 26, 66, 68, 72, 77, 4, 41, 42, 43}
+	expectValue := []int{1, 6, 7, 1, 9, 5, 5, 7, 0, 9}
+
+	for idx, boxIdx := range index {
+		if sk.boxes[boxIdx].value != expectValue[idx] {
+			t.Errorf("Expected box value=%v, got %v", expectValue[idx], sk.boxes[boxIdx].value)
+		}
 	}
 }
