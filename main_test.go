@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -121,12 +123,10 @@ func TestCreateSkInitOptions(t *testing.T) {
 	}
 }
 
-func TestGetBoxValues(t *testing.T) {
+func TestSolveTrivial(t *testing.T) {
 	sk := createSk("000000000035070840097302510003904100060000090009503700051608920026090450000000000")
 
-	for hasNewValue := true; hasNewValue == true; {
-		hasNewValue = sk.getBoxValues()
-	}
+	isComplete := sk.solveTrivial()
 
 	index := []int{12, 26, 66, 68, 72, 77, 4, 41, 42, 43}
 	expectValue := []int{1, 6, 7, 1, 9, 5, 5, 7, 0, 9}
@@ -136,8 +136,22 @@ func TestGetBoxValues(t *testing.T) {
 			t.Errorf("Expected box value=%v, got %v", expectValue[idx], sk.boxes[boxIdx].value)
 		}
 	}
+	if isComplete {
+		t.Errorf("Sudoku isComplete=true but expect flase")
+	}
 
-	if sk.boxes[78].value != 6 {
-		t.Errorf("Expected box value=%v, got %v", 6, sk.boxes[78].value)
+	sk1 := createSk("030006040980204000060809257000700090000000801000053406490008600058107020203600009")
+	isComplete1 := sk1.solveTrivial()
+
+	if !isComplete1 {
+		t.Errorf("Sudoku 1 isComplete=false but expect true")
+	}
+
+	for idx, value := range strings.Split("732516948985274163164839257346781592579462831821953476497328615658197324213645789", "") {
+		intV, _ := strconv.Atoi(value)
+		if sk1.boxes[idx].value != intV {
+			t.Errorf("Expected box value=%v, got %v", intV, sk1.boxes[idx].value)
+		}
+
 	}
 }

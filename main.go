@@ -7,7 +7,6 @@ import (
 )
 
 type box struct {
-	idx             int
 	value           int
 	rowIdx          int
 	rowNeighborIdx1 int
@@ -47,8 +46,7 @@ func createSk(input string) sk {
 func (s *sk) print() {
 	for _, box := range s.boxes {
 		if box.colIdx%3 == 0 {
-			fmt.Print("   |")q
-
+			fmt.Print("   |")
 		}
 
 		if box.value == 0 {
@@ -71,7 +69,6 @@ func (s *sk) initBoxes(input [81]int) {
 
 	for idx, value := range input {
 		boxes[idx] = box{
-			idx:   idx,
 			value: value,
 			rowIdx: func() int {
 				return (idx%9 - idx) / -9
@@ -128,12 +125,9 @@ func (s *sk) initOptions() {
 	(*s).options.squares = squaresOp
 }
 
-func (s *sk) getBoxValues() bool {
-	hasNewValue := false
-
+func (s *sk) solveTrivial() bool {
 	for idx, box := range s.boxes {
 		if box.value == 0 {
-
 			var pointOpts []int
 			var neighborOpts []int
 
@@ -154,7 +148,7 @@ func (s *sk) getBoxValues() bool {
 
 			if len(pointOpts) == 1 {
 				(*s).setNewBoxValue(pointOpts[0], idx)
-				hasNewValue = true
+				(*s).solveTrivial()
 			}
 
 			var options []int
@@ -167,7 +161,7 @@ func (s *sk) getBoxValues() bool {
 
 			if len(options) == 1 {
 				(*s).setNewBoxValue(options[0], idx)
-				hasNewValue = true
+				(*s).solveTrivial()
 			} else if len(options) != 0 {
 				(*s).boxes[idx].options = options
 			} else {
@@ -176,56 +170,13 @@ func (s *sk) getBoxValues() bool {
 		}
 	}
 
-	if !hasNewValue {
-		for i := 0; i < 9; i++ {
-			colBoxes := filterBox((*s).boxes, func(box box) bool { return box.value == 0 && box.colIdx == i })
-			for _, box := range colBoxes {
-				for _, op := range box.options {
-					uniqueOp := true
-					for _, b := range colBoxes {
-						if b.rowIdx != box.rowIdx {
-							if contains(b.options, op) {
-								uniqueOp = false
-							}
-						}
-					}
-
-					if uniqueOp {
-						(*s).setNewBoxValue(op, box.idx)
-
-						hasNewValue = true
-						break
-					}
-				}
-			}
-
-			if !hasNewValue {
-				rowBoxes := filterBox((*s).boxes, func(box box) bool { return box.value == 0 && box.rowIdx == i })
-				for _, box := range rowBoxes {
-					for _, op := range box.options {
-						uniqueOp := true
-						for _, b := range rowBoxes {
-							if b.colIdx != box.colIdx {
-								if contains(b.options, op) {
-									uniqueOp = false
-								}
-							}
-						}
-
-						if uniqueOp {
-							(*s).setNewBoxValue(op, box.idx)
-
-							hasNewValue = true
-							break
-						}
-					}
-				}
-			}
-
+	for _, box := range s.boxes {
+		if box.value == 0 {
+			return false
 		}
 	}
 
-	return hasNewValue
+	return true
 }
 
 func (s *sk) setNewBoxValue(value int, idx int) {
@@ -236,15 +187,6 @@ func (s *sk) setNewBoxValue(value int, idx int) {
 	(*s).options.rows[box.rowIdx] = remove((*s).options.rows[box.rowIdx], value)
 	(*s).options.cols[box.colIdx] = remove((*s).options.cols[box.colIdx], value)
 	(*s).options.squares[box.squareIdx] = remove((*s).options.squares[box.squareIdx], value)
-}
-
-func filterBox(boxes [81]box, test func(box) bool) (ret []box) {
-	for _, box := range boxes {
-		if test(box) {
-			ret = append(ret, box)
-		}
-	}
-	return
 }
 
 func remove(s []int, rV int) []int {
