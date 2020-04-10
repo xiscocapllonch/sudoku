@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -41,6 +42,28 @@ func createSk(input string) sk {
 	newSk.initOptions()
 
 	return newSk
+}
+
+func (s *sk) print() {
+	for _, box := range s.boxes {
+		if box.colIdx%3 == 0 {
+			fmt.Print("   |")q
+
+		}
+
+		if box.value == 0 {
+			fmt.Print(" |")
+		} else {
+			fmt.Print(box.value, "|")
+		}
+
+		if box.colIdx == 8 {
+			fmt.Print("\n")
+			if box.rowIdx%3 == 2 {
+				fmt.Println("")
+			}
+		}
+	}
 }
 
 func (s *sk) initBoxes(input [81]int) {
