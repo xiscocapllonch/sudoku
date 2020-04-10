@@ -6,6 +6,7 @@ import (
 )
 
 type box struct {
+	idx             int
 	value           int
 	rowIdx          int
 	rowNeighborIdx1 int
@@ -47,6 +48,7 @@ func (s *sk) initBoxes(input [81]int) {
 
 	for idx, value := range input {
 		boxes[idx] = box{
+			idx:   idx,
 			value: value,
 			rowIdx: func() int {
 				return (idx%9 - idx) / -9
@@ -151,6 +153,55 @@ func (s *sk) getBoxValues() bool {
 		}
 	}
 
+	if !hasNewValue {
+		for i := 0; i < 9; i++ {
+			colBoxes := filterBox((*s).boxes, func(box box) bool { return box.value == 0 && box.colIdx == i })
+			for _, box := range colBoxes {
+				for _, op := range box.options {
+					uniqueOp := true
+					for _, b := range colBoxes {
+						if b.rowIdx != box.rowIdx {
+							if contains(b.options, op) {
+								uniqueOp = false
+							}
+						}
+					}
+
+					if uniqueOp {
+						(*s).setNewBoxValue(op, box.idx)
+
+						hasNewValue = true
+						break
+					}
+				}
+			}
+
+			if !hasNewValue {
+				rowBoxes := filterBox((*s).boxes, func(box box) bool { return box.value == 0 && box.rowIdx == i })
+				for _, box := range rowBoxes {
+					for _, op := range box.options {
+						uniqueOp := true
+						for _, b := range rowBoxes {
+							if b.colIdx != box.colIdx {
+								if contains(b.options, op) {
+									uniqueOp = false
+								}
+							}
+						}
+
+						if uniqueOp {
+							(*s).setNewBoxValue(op, box.idx)
+
+							hasNewValue = true
+							break
+						}
+					}
+				}
+			}
+
+		}
+	}
+
 	return hasNewValue
 }
 
@@ -159,9 +210,18 @@ func (s *sk) setNewBoxValue(value int, idx int) {
 
 	box := (*s).boxes[idx]
 
-	(*s).options.squares[box.squareIdx] = remove((*s).options.squares[box.squareIdx], value)
+	(*s).options.rows[box.rowIdx] = remove((*s).options.rows[box.rowIdx], value)
 	(*s).options.cols[box.colIdx] = remove((*s).options.cols[box.colIdx], value)
 	(*s).options.squares[box.squareIdx] = remove((*s).options.squares[box.squareIdx], value)
+}
+
+func filterBox(boxes [81]box, test func(box) bool) (ret []box) {
+	for _, box := range boxes {
+		if test(box) {
+			ret = append(ret, box)
+		}
+	}
+	return
 }
 
 func remove(s []int, rV int) []int {

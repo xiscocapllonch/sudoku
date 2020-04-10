@@ -136,4 +136,8 @@ func TestGetBoxValues(t *testing.T) {
 			t.Errorf("Expected box value=%v, got %v", expectValue[idx], sk.boxes[boxIdx].value)
 		}
 	}
+
+	if sk.boxes[78].value != 6 {
+		t.Errorf("Expected box value=%v, got %v", 6, sk.boxes[78].value)
+	}
 }
