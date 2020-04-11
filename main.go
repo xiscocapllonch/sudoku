@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -125,7 +126,51 @@ func (s *sk) initOptions() {
 	(*s).options.squares = squaresOp
 }
 
-func (s *sk) solveTrivial() (bool, []int) {
+func solve(input string, c chan string) {
+	s := createSk(input)
+	itsDone, opts, idx := s.solveTrivial()
+	if itsDone {
+		s.print()
+		os.Exit(1)
+		return
+	} else if idx != -1 {
+	out:
+		for i := 1; i < 9; i++ {
+			if len(opts) == i {
+				for _, op := range opts {
+					output := ""
+					for i2, box := range s.boxes {
+						if i2 == idx {
+							output = output + strconv.Itoa(op)
+						} else {
+							output = output + strconv.Itoa(box.value)
+						}
+					}
+
+					c <- output
+				}
+				break out
+			}
+		}
+	}
+
+}
+
+func main() {
+	skChan := make(chan string)
+	// sudoku := "000000000035070840097302510003904100060000090009503700051608920026090450000000000"
+	sudoku := "400070002080040050003209800009000500860000013005000200006804300030060020700020009"
+
+	go solve(sudoku, skChan)
+
+	for s := range skChan {
+		go func(s string) {
+			solve(s, skChan)
+		}(s)
+	}
+}
+
+func (s *sk) solveTrivial() (itsDone bool, opts []int, optIdx int) {
 	for idx, box := range s.boxes {
 		if s.boxes[idx].value == 0 {
 			var pointOpts []int
@@ -172,22 +217,23 @@ func (s *sk) solveTrivial() (bool, []int) {
 
 	for _, box := range s.boxes {
 		if box.value == 0 {
-			return false, func() []int {
+			opts, optIdx = func() ([]int, int) {
 				for i := 1; i < 9; i++ {
-					for _, box := range s.boxes {
+					for idx, box := range s.boxes {
 						if box.value == 0 {
 							if len(box.options) == i {
-								return box.options
+								return box.options, idx
 							}
 						}
 					}
 				}
-				return []int{}
+				return []int{}, -1
 			}()
+			return false, opts, optIdx
 		}
 	}
 
-	return true, []int{}
+	return true, []int{}, -1
 }
 
 func (s *sk) setNewBoxValue(value int, idx int) {

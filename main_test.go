@@ -126,7 +126,7 @@ func TestCreateSkInitOptions(t *testing.T) {
 func TestSolveTrivial(t *testing.T) {
 	sk := createSk("000000000035070840097302510003904100060000090009503700051608920026090450000000000")
 
-	isComplete, opt := sk.solveTrivial()
+	isComplete, opt, optIdx := sk.solveTrivial()
 
 	index := []int{12, 26, 66, 68, 72, 77, 4, 41, 42, 43}
 	expectValue := []int{1, 6, 7, 1, 9, 5, 5, 7, 0, 9}
@@ -141,23 +141,26 @@ func TestSolveTrivial(t *testing.T) {
 		t.Errorf("Sudoku isComplete=true but expect flase")
 	}
 
-
-	if  (!contains(opt, 3) || !contains(opt, 4)) &&
+	if (!contains(opt, 3) || !contains(opt, 4)) &&
 		len(opt) != 2 {
-		t.Errorf("solveTrivial shoul return otpions = [3,4]")
+		t.Errorf("solveTrivial should return otpions = [3,4] but got %v", opt)
+	}
+
+	if optIdx != 3 {
+		t.Errorf("solveTrivial should return optIdx = 3 but got %v", optIdx)
 	}
 
 	sk.setNewBoxValue(4, 3)
-	isComplete, _ = sk.solveTrivial()
+	isComplete, _, _ = sk.solveTrivial()
 	sk.setNewBoxValue(1, 1)
-	isComplete, _ = sk.solveTrivial()
+	isComplete, _, _ = sk.solveTrivial()
 	sk.setNewBoxValue(8, 2)
 
 	sk1 := sk
 
-	isComplete, _ = sk.solveTrivial()
+	isComplete, _, _ = sk.solveTrivial()
 	sk.setNewBoxValue(3, 7)
-	isComplete, _ = sk.solveTrivial()
+	isComplete, _, _ = sk.solveTrivial()
 
 	for idx, value := range strings.Split("618459237235176849497382516873924165562817394149563782751648923326791458984235671", "") {
 		intV, _ := strconv.Atoi(value)
@@ -172,7 +175,7 @@ func TestSolveTrivial(t *testing.T) {
 	}
 
 	sk1.setNewBoxValue(7, 7)
-	isComplete1, opt1 := sk1.solveTrivial()
+	isComplete1, opt1, _ := sk1.solveTrivial()
 
 	if isComplete1 {
 		t.Errorf("Sudoku 1 isComplete=true but expect false")
@@ -183,7 +186,7 @@ func TestSolveTrivial(t *testing.T) {
 	}
 
 	sk2 := createSk("030006040980204000060809257000700090000000801000053406490008600058107020203600009")
-	isComplete2, _ := sk2.solveTrivial()
+	isComplete2, _, _ := sk2.solveTrivial()
 
 	if !isComplete2 {
 		t.Errorf("Sudoku 2 isComplete=false but expect true")
