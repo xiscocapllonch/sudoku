@@ -125,9 +125,9 @@ func (s *sk) initOptions() {
 	(*s).options.squares = squaresOp
 }
 
-func (s *sk) solveTrivial() bool {
+func (s *sk) solveTrivial() (bool, []int) {
 	for idx, box := range s.boxes {
-		if box.value == 0 {
+		if s.boxes[idx].value == 0 {
 			var pointOpts []int
 			var neighborOpts []int
 
@@ -172,11 +172,22 @@ func (s *sk) solveTrivial() bool {
 
 	for _, box := range s.boxes {
 		if box.value == 0 {
-			return false
+			return false, func() []int {
+				for i := 1; i < 9; i++ {
+					for _, box := range s.boxes {
+						if box.value == 0 {
+							if len(box.options) == i {
+								return box.options
+							}
+						}
+					}
+				}
+				return []int{}
+			}()
 		}
 	}
 
-	return true
+	return true, []int{}
 }
 
 func (s *sk) setNewBoxValue(value int, idx int) {
