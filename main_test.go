@@ -140,12 +140,12 @@ func TestSolveTrivial(t *testing.T) {
 		t.Errorf("Sudoku length candidates should be 2 but got %v", len(candidates))
 	}
 
-	if string(candidates[0][3]) == string(candidates[1][3])  {
+	if string(candidates[0][3]) == string(candidates[1][3]) {
 		t.Errorf("candidates should be diferent for this string idx")
 	}
 
 	if (string(candidates[0][3]) == "3" || string(candidates[0][3]) == "4") &&
-		(string(candidates[1][3]) == "3" || string(candidates[1][3]) == "4")  {
+		(string(candidates[1][3]) == "3" || string(candidates[1][3]) == "4") {
 		t.Errorf("candidates should be 3 or 4 for this string idx")
 	}
 
@@ -158,7 +158,7 @@ func TestSolveTrivial(t *testing.T) {
 	sk = createSk(candidates[0])
 	candidates = sk.solveTrivial()
 
-	if len(candidates) !=1 {
+	if len(candidates) != 1 {
 		t.Errorf("Sudoku length candidates should be 1 but got %v", len(candidates))
 	}
 
@@ -170,7 +170,7 @@ func TestSolveTrivial(t *testing.T) {
 	// LEVEL EASY, SOLUTION WITHOUT EXPLORATION
 	sk = createSk("030006040980204000060809257000700090000000801000053406490008600058107020203600009")
 	candidates = sk.solveTrivial()
-	if len(candidates) !=1 {
+	if len(candidates) != 1 {
 		t.Errorf("Sudoku length candidates should be 1 but got %v", len(candidates))
 	}
 

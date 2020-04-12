@@ -116,96 +116,59 @@ func (s *sk) initOptions() {
 	}
 }
 
-func (s *sk) solveTrivial() (candidates []string) {
+func (s *sk) solveTrivial() []string {
 	for idx, box := range s.boxes {
 		if s.boxes[idx].value == 0 {
-			var pointOpts []int
-			var neighborOpts []int
-
-			for i := 1; i < 10; i++ {
-				if contains(s.options.rows[box.rowIdx], i) &&
-					contains(s.options.cols[box.colIdx], i) &&
-					contains(s.options.squares[box.squareIdx], i) {
-					pointOpts = append(pointOpts, i)
-				}
-
-				if contains(s.options.rows[box.rowNeighborIdx1], i) ||
-					contains(s.options.rows[box.rowNeighborIdx2], i) ||
-					contains(s.options.cols[box.colNeighborIdx1], i) ||
-					contains(s.options.cols[box.colNeighborIdx2], i) {
-					neighborOpts = append(neighborOpts, i)
-				}
-			}
-
-			if len(pointOpts) == 1 {
-				(*s).setNewBoxValue(pointOpts[0], idx)
-				(*s).solveTrivial()
-			}
-
-			var options []int
-
-			for _, v := range pointOpts {
-				if !contains(neighborOpts, v) {
-					options = append(options, v)
-				}
-			}
-
+			options := box.getOptions(s.options)
 			if len(options) == 1 {
-				(*s).setNewBoxValue(options[0], idx)
-				(*s).solveTrivial()
-			} else if len(options) != 0 {
-				(*s).boxes[idx].options = options
+				s.boxes[idx].value = options[0]
+				box := s.boxes[idx]
+				s.options.removeOptions(options[0], box.rowIdx, box.colIdx, box.squareIdx)
+				s.solveTrivial()
 			} else {
-				(*s).boxes[idx].options = pointOpts
+				s.boxes[idx].options = options
 			}
 		}
 	}
 
 	for _, box := range s.boxes {
 		if box.value == 0 {
-			return func() []string {
-				for i := 2; i < 9; i++ {
-					for idx, box := range s.boxes {
-						if box.value == 0 {
-							if len(box.options) == i {
-								for _, op := range box.options {
-									output := ""
-									for i2, box := range s.boxes {
-										if i2 == idx {
-											output = output + strconv.Itoa(op)
-										} else {
-											output = output + strconv.Itoa(box.value)
-										}
-									}
-									candidates = append(candidates, output)
-								}
-								return candidates
-							}
-						}
-					}
-				}
-				return []string{}
-			}()
+			return s.getCandidates()
 		}
 	}
 
-	output := ""
+	solvedSk := ""
 	for _, box := range s.boxes {
-		output = output + strconv.Itoa(box.value)
+		solvedSk = solvedSk + strconv.Itoa(box.value)
 	}
-
-	candidates = append(candidates, output)
-
-	return candidates
+	return []string{solvedSk}
 }
 
-func (s *sk) setNewBoxValue(value int, idx int) {
-	(*s).boxes[idx].value = value
-	box := (*s).boxes[idx]
-	(*s).options.removeOptions(value, box.rowIdx, box.colIdx, box.squareIdx)
+func (s *sk) getCandidates() (candidates []string) {
+	for i := 2; i < 9; i++ {
+		for idx, box := range s.boxes {
+			if box.value == 0 {
+				if len(box.options) == i {
+					for _, op := range box.options {
+						output := ""
+						for i2, box := range s.boxes {
+							if i2 == idx {
+								output = output + strconv.Itoa(op)
+							} else {
+								output = output + strconv.Itoa(box.value)
+							}
+						}
+						candidates = append(candidates, output)
+					}
+					return candidates
+				}
+			}
+		}
+	}
+	return []string{}
 }
 
-func (b *box) initIndexes (idx int) {
+func (b *box) initIndexes(idx int) {
 	getNeighborsIdx := func(idx int) (idx1 int, idx2 int) {
 		if idx%3 == 0 {
 			return idx + 1, idx + 2
@@ -229,6 +192,44 @@ func (b *box) initIndexes (idx int) {
 	b.rowNeighborIdx1, b.rowNeighborIdx2 = getNeighborsIdx(rowIdx)
 	b.colNeighborIdx1, b.colNeighborIdx2 = getNeighborsIdx(colIdx)
 	b.squareIdx = ((colIdx%3 - colIdx) / -3) + (((rowIdx%3 - rowIdx) / -3) * 3)
+}
+
+func (b *box) getOptions(o options) []int {
+	var pointOpts []int
+	var neighborOpts []int
+
+	for i := 1; i < 10; i++ {
+		if contains(o.rows[b.rowIdx], i) &&
+			contains(o.cols[b.colIdx], i) &&
+			contains(o.squares[b.squareIdx], i) {
+			pointOpts = append(pointOpts, i)
+		}
+
+		if contains(o.rows[b.rowNeighborIdx1], i) ||
+			contains(o.rows[b.rowNeighborIdx2], i) ||
+			contains(o.cols[b.colNeighborIdx1], i) ||
+			contains(o.cols[b.colNeighborIdx2], i) {
+			neighborOpts = append(neighborOpts, i)
+		}
+	}
+
+	if len(pointOpts) == 1 {
+		return pointOpts
+	}
+
+	var options []int
+
+	for _, v := range pointOpts {
+		if !contains(neighborOpts, v) {
+			options = append(options, v)
+		}
+	}
+
+	if len(options) > 0 {
+		return options
+	} else {
+		return pointOpts
+	}
 }
 
 func (o *options) setDefaultValues() {
