@@ -19,12 +19,42 @@ type box struct {
 	options         []int
 }
 
+type options struct {
+	rows    map[int][]int
+	cols    map[int][]int
+	squares map[int][]int
+}
+
 type sk struct {
 	boxes   [81]box
-	options struct {
-		rows    map[int][]int
-		cols    map[int][]int
-		squares map[int][]int
+	options options
+}
+
+func main() {
+	skChan := make(chan string)
+	sudoku := "000000000035070840097302510003904100060000090009503700051608920026090450000000000"
+	// sudoku := "400070002080040050003209800009000500860000013005000200006804300030060020700020009"
+
+	go solve(sudoku, skChan)
+
+	for s := range skChan {
+		go func(s string) {
+			solve(s, skChan)
+		}(s)
+	}
+}
+
+func solve(input string, c chan string) {
+	s := createSk(input)
+	candidates := s.solveTrivial()
+	if len(candidates) == 1 {
+		s.print()
+		os.Exit(1)
+		return
+	} else if len(candidates) > 1 {
+		for _, candidate := range candidates {
+			c <- candidate
+		}
 	}
 }
 
@@ -69,88 +99,20 @@ func (s *sk) initBoxes(input [81]int) {
 	var boxes [81]box
 
 	for idx, value := range input {
-		boxes[idx] = box{
-			value: value,
-			rowIdx: func() int {
-				return (idx%9 - idx) / -9
-			}(),
-			colIdx: func() int {
-				return idx % 9
-			}(),
-			squareIdx: func() int {
-				col := idx % 9
-				row := (idx%9 - idx) / -9
-				return ((col%3 - col) / -3) + (((row%3 - row) / -3) * 3)
-			}(),
-		}
-
-		boxes[idx].rowNeighborIdx1, boxes[idx].rowNeighborIdx2 = getNeighborsIdx(boxes[idx].rowIdx)
-		boxes[idx].colNeighborIdx1, boxes[idx].colNeighborIdx2 = getNeighborsIdx(boxes[idx].colIdx)
-
+		newBox := box{value: value}
+		newBox.initIndexes(idx)
+		boxes[idx] = newBox
 	}
 
 	(*s).boxes = boxes
 }
 
-func getNeighborsIdx(idx int) (idx1 int, idx2 int) {
-	if idx%3 == 0 {
-		return idx + 1, idx + 2
-	} else if idx%3 == 1 {
-		return idx - 1, idx + 1
-	} else {
-		return idx - 2, idx - 1
-	}
-}
-
 func (s *sk) initOptions() {
-	rowsOp := make(map[int][]int)
-	colsOp := make(map[int][]int)
-	squaresOp := make(map[int][]int)
-
-	for i := 0; i < 9; i++ {
-		rowsOp[i] = []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
-		colsOp[i] = []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
-		squaresOp[i] = []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
-	}
-
+	s.options.setDefaultValues()
 	for _, box := range s.boxes {
 		if box.value != 0 {
-			rowsOp[box.rowIdx] = remove(rowsOp[box.rowIdx], box.value)
-			colsOp[box.colIdx] = remove(colsOp[box.colIdx], box.value)
-			squaresOp[box.squareIdx] = remove(squaresOp[box.squareIdx], box.value)
+			s.options.removeOptions(box.value, box.rowIdx, box.colIdx, box.squareIdx)
 		}
-	}
-
-	(*s).options.rows = rowsOp
-	(*s).options.cols = colsOp
-	(*s).options.squares = squaresOp
-}
-
-func solve(input string, c chan string) {
-	s := createSk(input)
-	candidates := s.solveTrivial()
-	if len(candidates) == 1 {
-		s.print()
-		os.Exit(1)
-		return
-	} else if len(candidates) > 1 {
-		for _, candidate := range candidates {
-			c <- candidate
-		}
-	}
-}
-
-func main() {
-	skChan := make(chan string)
-	sudoku := "000000000035070840097302510003904100060000090009503700051608920026090450000000000"
-	// sudoku := "400070002080040050003209800009000500860000013005000200006804300030060020700020009"
-
-	go solve(sudoku, skChan)
-
-	for s := range skChan {
-		go func(s string) {
-			solve(s, skChan)
-		}(s)
 	}
 }
 
@@ -201,12 +163,11 @@ func (s *sk) solveTrivial() (candidates []string) {
 
 	for _, box := range s.boxes {
 		if box.value == 0 {
-			opts := func() []string {
+			return func() []string {
 				for i := 2; i < 9; i++ {
 					for idx, box := range s.boxes {
 						if box.value == 0 {
 							if len(box.options) == i {
-
 								for _, op := range box.options {
 									output := ""
 									for i2, box := range s.boxes {
@@ -216,10 +177,8 @@ func (s *sk) solveTrivial() (candidates []string) {
 											output = output + strconv.Itoa(box.value)
 										}
 									}
-
 									candidates = append(candidates, output)
 								}
-
 								return candidates
 							}
 						}
@@ -227,13 +186,12 @@ func (s *sk) solveTrivial() (candidates []string) {
 				}
 				return []string{}
 			}()
-			return opts
 		}
 	}
 
 	output := ""
 	for _, box := range s.boxes {
-			output = output + strconv.Itoa(box.value)
+		output = output + strconv.Itoa(box.value)
 	}
 
 	candidates = append(candidates, output)
@@ -243,23 +201,66 @@ func (s *sk) solveTrivial() (candidates []string) {
 
 func (s *sk) setNewBoxValue(value int, idx int) {
 	(*s).boxes[idx].value = value
-
 	box := (*s).boxes[idx]
-
-	(*s).options.rows[box.rowIdx] = remove((*s).options.rows[box.rowIdx], value)
-	(*s).options.cols[box.colIdx] = remove((*s).options.cols[box.colIdx], value)
-	(*s).options.squares[box.squareIdx] = remove((*s).options.squares[box.squareIdx], value)
+	(*s).options.removeOptions(value, box.rowIdx, box.colIdx, box.squareIdx)
 }
 
-func remove(s []int, rV int) []int {
-	for i, v := range s {
-		if v == rV {
-			s = append(s[:i], s[i+1:]...)
-			break
+func (b *box) initIndexes (idx int) {
+	getNeighborsIdx := func(idx int) (idx1 int, idx2 int) {
+		if idx%3 == 0 {
+			return idx + 1, idx + 2
+		} else if idx%3 == 1 {
+			return idx - 1, idx + 1
+		} else {
+			return idx - 2, idx - 1
 		}
 	}
 
-	return s
+	rowIdx := func() int {
+		return (idx%9 - idx) / -9
+	}()
+
+	colIdx := func() int {
+		return idx % 9
+	}()
+
+	b.rowIdx = rowIdx
+	b.colIdx = colIdx
+	b.rowNeighborIdx1, b.rowNeighborIdx2 = getNeighborsIdx(rowIdx)
+	b.colNeighborIdx1, b.colNeighborIdx2 = getNeighborsIdx(colIdx)
+	b.squareIdx = ((colIdx%3 - colIdx) / -3) + (((rowIdx%3 - rowIdx) / -3) * 3)
+}
+
+func (o *options) setDefaultValues() {
+	rowsOp := make(map[int][]int)
+	colsOp := make(map[int][]int)
+	squaresOp := make(map[int][]int)
+
+	for i := 0; i < 9; i++ {
+		rowsOp[i] = []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+		colsOp[i] = []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+		squaresOp[i] = []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	}
+
+	(*o).rows = rowsOp
+	(*o).cols = colsOp
+	(*o).squares = squaresOp
+}
+
+func (o *options) removeOptions(value int, rowIdx int, colIdx int, squareIdx int) {
+	rm := func(s []int, rV int) []int {
+		for i, v := range s {
+			if v == rV {
+				s = append(s[:i], s[i+1:]...)
+				break
+			}
+		}
+
+		return s
+	}
+	o.rows[rowIdx] = rm(o.rows[rowIdx], value)
+	o.cols[colIdx] = rm((*o).cols[colIdx], value)
+	o.squares[squareIdx] = rm(o.squares[squareIdx], value)
 }
 
 func contains(s []int, cV int) bool {
