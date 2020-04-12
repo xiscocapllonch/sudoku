@@ -1,8 +1,6 @@
 package main
 
 import (
-	"strconv"
-	"strings"
 	"testing"
 )
 
@@ -124,9 +122,10 @@ func TestCreateSkInitOptions(t *testing.T) {
 }
 
 func TestSolveTrivial(t *testing.T) {
+	// LEVEL HARD, SOLUTION WITH EXPLORATION
 	sk := createSk("000000000035070840097302510003904100060000090009503700051608920026090450000000000")
 
-	isComplete, opt, optIdx := sk.solveTrivial()
+	candidates := sk.solveTrivial()
 
 	index := []int{12, 26, 66, 68, 72, 77, 4, 41, 42, 43}
 	expectValue := []int{1, 6, 7, 1, 9, 5, 5, 7, 0, 9}
@@ -137,66 +136,46 @@ func TestSolveTrivial(t *testing.T) {
 		}
 	}
 
-	if isComplete {
-		t.Errorf("Sudoku isComplete=true but expect flase")
+	if len(candidates) != 2 {
+		t.Errorf("Sudoku length candidates should be 2 but got %v", len(candidates))
 	}
 
-	if (!contains(opt, 3) || !contains(opt, 4)) &&
-		len(opt) != 2 {
-		t.Errorf("solveTrivial should return otpions = [3,4] but got %v", opt)
+	if string(candidates[0][3]) == string(candidates[1][3])  {
+		t.Errorf("candidates should be diferent for this string idx")
 	}
 
-	if optIdx != 3 {
-		t.Errorf("solveTrivial should return optIdx = 3 but got %v", optIdx)
+	if (string(candidates[0][3]) == "3" || string(candidates[0][3]) == "4") &&
+		(string(candidates[1][3]) == "3" || string(candidates[1][3]) == "4")  {
+		t.Errorf("candidates should be 3 or 4 for this string idx")
 	}
 
-	sk.setNewBoxValue(4, 3)
-	isComplete, _, _ = sk.solveTrivial()
-	sk.setNewBoxValue(1, 1)
-	isComplete, _, _ = sk.solveTrivial()
-	sk.setNewBoxValue(8, 2)
+	sk = createSk(candidates[0])
+	candidates = sk.solveTrivial()
+	sk = createSk(candidates[0])
+	candidates = sk.solveTrivial()
+	sk = createSk(candidates[1])
+	candidates = sk.solveTrivial()
+	sk = createSk(candidates[0])
+	candidates = sk.solveTrivial()
 
-	sk1 := sk
-
-	isComplete, _, _ = sk.solveTrivial()
-	sk.setNewBoxValue(3, 7)
-	isComplete, _, _ = sk.solveTrivial()
-
-	for idx, value := range strings.Split("618459237235176849497382516873924165562817394149563782751648923326791458984235671", "") {
-		intV, _ := strconv.Atoi(value)
-		if sk.boxes[idx].value != intV {
-			t.Errorf("Expected box value=%v, got %v", intV, sk.boxes[idx].value)
-		}
-
+	if len(candidates) !=1 {
+		t.Errorf("Sudoku length candidates should be 1 but got %v", len(candidates))
 	}
 
-	if !isComplete {
-		t.Errorf("Sudoku isComplete=false but expect true")
+	solution := "618459237235176849497382516873924165562817394149563782751648923326791458984235671"
+	if candidates[0] != solution {
+		t.Errorf("Sudoku should be solved with: %v\n But got: %v", solution, candidates[0])
 	}
 
-	sk1.setNewBoxValue(7, 7)
-	isComplete1, opt1, _ := sk1.solveTrivial()
-
-	if isComplete1 {
-		t.Errorf("Sudoku 1 isComplete=true but expect false")
+	// LEVEL EASY, SOLUTION WITHOUT EXPLORATION
+	sk = createSk("030006040980204000060809257000700090000000801000053406490008600058107020203600009")
+	candidates = sk.solveTrivial()
+	if len(candidates) !=1 {
+		t.Errorf("Sudoku length candidates should be 1 but got %v", len(candidates))
 	}
 
-	if len(opt1) != 0 {
-		t.Errorf("Sudoku 1 shouldn't have options but got %v options", opt1)
-	}
-
-	sk2 := createSk("030006040980204000060809257000700090000000801000053406490008600058107020203600009")
-	isComplete2, _, _ := sk2.solveTrivial()
-
-	if !isComplete2 {
-		t.Errorf("Sudoku 2 isComplete=false but expect true")
-	}
-
-	for idx, value := range strings.Split("732516948985274163164839257346781592579462831821953476497328615658197324213645789", "") {
-		intV, _ := strconv.Atoi(value)
-		if sk2.boxes[idx].value != intV {
-			t.Errorf("Expected box value=%v, got %v", intV, sk2.boxes[idx].value)
-		}
-
+	solution = "732516948985274163164839257346781592579462831821953476497328615658197324213645789"
+	if candidates[0] != solution {
+		t.Errorf("Sudoku should be solved with: %v\n But got: %v", solution, candidates[0])
 	}
 }

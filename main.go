@@ -128,38 +128,22 @@ func (s *sk) initOptions() {
 
 func solve(input string, c chan string) {
 	s := createSk(input)
-	itsDone, opts, idx := s.solveTrivial()
-	if itsDone {
+	candidates := s.solveTrivial()
+	if len(candidates) == 1 {
 		s.print()
 		os.Exit(1)
 		return
-	} else if idx != -1 {
-	out:
-		for i := 1; i < 9; i++ {
-			if len(opts) == i {
-				for _, op := range opts {
-					output := ""
-					for i2, box := range s.boxes {
-						if i2 == idx {
-							output = output + strconv.Itoa(op)
-						} else {
-							output = output + strconv.Itoa(box.value)
-						}
-					}
-
-					c <- output
-				}
-				break out
-			}
+	} else if len(candidates) > 1 {
+		for _, candidate := range candidates {
+			c <- candidate
 		}
 	}
-
 }
 
 func main() {
 	skChan := make(chan string)
-	// sudoku := "000000000035070840097302510003904100060000090009503700051608920026090450000000000"
-	sudoku := "400070002080040050003209800009000500860000013005000200006804300030060020700020009"
+	sudoku := "000000000035070840097302510003904100060000090009503700051608920026090450000000000"
+	// sudoku := "400070002080040050003209800009000500860000013005000200006804300030060020700020009"
 
 	go solve(sudoku, skChan)
 
@@ -170,7 +154,7 @@ func main() {
 	}
 }
 
-func (s *sk) solveTrivial() (itsDone bool, opts []int, optIdx int) {
+func (s *sk) solveTrivial() (candidates []string) {
 	for idx, box := range s.boxes {
 		if s.boxes[idx].value == 0 {
 			var pointOpts []int
@@ -217,23 +201,44 @@ func (s *sk) solveTrivial() (itsDone bool, opts []int, optIdx int) {
 
 	for _, box := range s.boxes {
 		if box.value == 0 {
-			opts, optIdx = func() ([]int, int) {
-				for i := 1; i < 9; i++ {
+			opts := func() []string {
+				for i := 2; i < 9; i++ {
 					for idx, box := range s.boxes {
 						if box.value == 0 {
 							if len(box.options) == i {
-								return box.options, idx
+
+								for _, op := range box.options {
+									output := ""
+									for i2, box := range s.boxes {
+										if i2 == idx {
+											output = output + strconv.Itoa(op)
+										} else {
+											output = output + strconv.Itoa(box.value)
+										}
+									}
+
+									candidates = append(candidates, output)
+								}
+
+								return candidates
 							}
 						}
 					}
 				}
-				return []int{}, -1
+				return []string{}
 			}()
-			return false, opts, optIdx
+			return opts
 		}
 	}
 
-	return true, []int{}, -1
+	output := ""
+	for _, box := range s.boxes {
+			output = output + strconv.Itoa(box.value)
+	}
+
+	candidates = append(candidates, output)
+
+	return candidates
 }
 
 func (s *sk) setNewBoxValue(value int, idx int) {
