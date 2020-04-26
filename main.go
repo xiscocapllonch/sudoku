@@ -145,53 +145,53 @@ func (s *sk) solveTrivial() []string {
 }
 
 func (s *sk) getCandidates() (candidates []string) {
-	for i := 2; i < 9; i++ {
-		for idx, box := range s.boxes {
-			if box.value == 0 {
-				if len(box.options) == i {
-					for _, op := range box.options {
-						output := ""
-						for i2, box := range s.boxes {
-							if i2 == idx {
-								output = output + strconv.Itoa(op)
-							} else {
-								output = output + strconv.Itoa(box.value)
-							}
-						}
-						candidates = append(candidates, output)
+	opts, idx := func() ([]int, int) {
+		for i := 2; i < 9; i++ {
+			for idx, box := range s.boxes {
+				if box.value == 0 {
+					if len(box.options) == i {
+						return box.options, idx
 					}
-					return candidates
 				}
 			}
 		}
+		return []int{}, -1
+	}()
+
+	for _, op := range opts {
+		output := ""
+		for i, box := range s.boxes {
+			var value int
+			if i == idx {
+				value = op
+			} else {
+				value = box.value
+			}
+			output = output + strconv.Itoa(value)
+		}
+		candidates = append(candidates, output)
 	}
-	return []string{}
+
+	return candidates
 }
 
 func (b *box) initIndexes(idx int) {
 	getNeighborsIdx := func(idx int) (idx1 int, idx2 int) {
-		if idx%3 == 0 {
+		switch idx % 3 {
+		case 0:
 			return idx + 1, idx + 2
-		} else if idx%3 == 1 {
+		case 1:
 			return idx - 1, idx + 1
-		} else {
+		default:
 			return idx - 2, idx - 1
 		}
 	}
 
-	rowIdx := func() int {
-		return (idx%9 - idx) / -9
-	}()
-
-	colIdx := func() int {
-		return idx % 9
-	}()
-
-	b.rowIdx = rowIdx
-	b.colIdx = colIdx
-	b.rowNeighborIdx1, b.rowNeighborIdx2 = getNeighborsIdx(rowIdx)
-	b.colNeighborIdx1, b.colNeighborIdx2 = getNeighborsIdx(colIdx)
-	b.squareIdx = ((colIdx%3 - colIdx) / -3) + (((rowIdx%3 - rowIdx) / -3) * 3)
+	b.rowIdx = (idx%9 - idx) / -9
+	b.colIdx  = idx % 9
+	b.squareIdx = ((b.colIdx%3 - b.colIdx) / -3) + (((b.rowIdx%3 - b.rowIdx) / -3) * 3)
+	b.rowNeighborIdx1, b.rowNeighborIdx2 = getNeighborsIdx(b.rowIdx)
+	b.colNeighborIdx1, b.colNeighborIdx2 = getNeighborsIdx(b.colIdx)
 }
 
 func (b *box) getOptions(o options) []int {
