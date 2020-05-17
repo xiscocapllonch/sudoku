@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type box struct {
@@ -31,25 +31,39 @@ type sk struct {
 }
 
 func main() {
+	const NumReceivers = 10
+
+	wgReceivers := sync.WaitGroup{}
+	wgReceivers.Add(NumReceivers)
+
 	skChan := make(chan string)
 	sudoku := "000000000035070840097302510003904100060000090009503700051608920026090450000000000"
 	// sudoku := "400070002080040050003209800009000500860000013005000200006804300030060020700020009"
 
 	go solve(sudoku, skChan)
 
-	for s := range skChan {
-		go func(s string) {
-			solve(s, skChan)
-		}(s)
+	for i := 0; i < NumReceivers; i++ {
+		go func() {
+			defer wgReceivers.Done()
+			for s := range skChan {
+				fmt.Printf("S: %v\n", s)
+				go func(s string) {
+					solve(s, skChan)
+				}(s)
+			}
+		}()
 	}
+
+	wgReceivers.Wait()
 }
 
 func solve(input string, c chan string) {
+	fmt.Printf("input: %v\n", input)
 	s := createSk(input)
 	candidates := s.solveTrivial()
 	if len(candidates) == 1 {
 		s.print()
-		os.Exit(1)
+		close(c)
 		return
 	} else if len(candidates) > 1 {
 		for _, candidate := range candidates {
