@@ -37,4 +37,4 @@ func main() {
 }
 ```
 
-[![Output example](docs/output_example.png)](http://xiscocapllonch.github.io/sudoku/)
+![Output example](docs/output_example.png)
