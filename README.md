@@ -37,4 +37,4 @@ func main() {
 }
 ```
 
-![Output example](docs/output_example.png)
+![](docs/output_example.png)
