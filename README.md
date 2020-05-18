@@ -20,7 +20,7 @@ package main
 
 import (
     "fmt"
-    twitterscraper "github.com/xiscocapllonch/sudoku"
+    "github.com/xiscocapllonch/sudoku"
 )
 
 func main() {
@@ -36,3 +36,5 @@ func main() {
     fmt.Printf("Formated Solution: \n%v\n", formatedSolution)
 }
 ```
+
+[![Output example](docs/output_example.png)](http://xiscocapllonch.github.io/sudoku/)
