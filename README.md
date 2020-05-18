@@ -1,7 +1,7 @@
 
-#Sudoku
+# Sudoku
 
-Super useful code written in golang to solve trivial sudokus and sudokus that require exploration too.
+Super USEFUL code written in golang to solve trivial sudokus and sudokus that require exploration too.
 
 ## Why?
 
@@ -10,7 +10,7 @@ I was bored in my COVID-19 quarantine and I was killing time by solving difficul
 ## Installation
 
 ```shell
-go get -u github.com/xiscocapllonch/sudoku
+go get github.com/xiscocapllonch/sudoku
 ```
 
 ## Usage
